@@ -20,7 +20,7 @@ Our experiments underscore the importance of carefully selecting and tuning the 
 
 Included in our analysis is an insightful plot (Figure 6) illustrating the performance comparison across different loss functions and activation functions within the SNN framework. This visualization underscores the nuanced impacts these factors have on the overall effectiveness of face recognition models.
 
-![Experimental Results](path/to/figure6.jpg)
+![GitHub Image](/images/figure6.jpg)
 
 *Figure 6: Performance comparison of SNN across different loss functions and activation functions.*
 
