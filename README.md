@@ -24,18 +24,10 @@ Included in our analysis is an insightful plot (Figure 6) illustrating the perfo
 
 ![GitHub Image](/Image/figure6.png)
 
-*Figure 6: Performance comparison of SNN across different loss functions and activation functions.*
-
-## Usage
-
-- Clone the repository.
-- Install dependencies as outlined in `requirements.txt`.
-- Follow the provided documentation to replicate the study or apply the findings to your own face recognition projects.
-
 ## Future Directions
 
 The findings from this study open several avenues for future research, including further optimization of hyperparameters and exploration of additional neural network architectures to enhance face recognition capabilities.
 
 ## Acknowledgments
 
-This work is based on the study "Practical Work in AI" by Boran Cihan Polat. For a deeper dive into the methodology, results, and theoretical underpinnings, refer to the original study.
+This work is based on the study "Practical Work in AI" by Boran Cihan Polat. For a deeper dive into the methodology, results, and theoretical underpinnings, please read teh provided pdf-file.
