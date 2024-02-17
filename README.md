@@ -11,7 +11,7 @@ The project investigates the application of different loss functions (Binary Cro
 
 - **Loss Functions:** The comparative analysis revealed that Triplet Loss significantly enhances SNN's ability to distinguish between faces.
 - **Activation Functions:** The study highlights the superior performance of the SeLU activation function over ReLU, attributing its effectiveness to its self-normalizing properties.
-![GitHub Image](/Image/figure4.png)
+- ![GitHub Image](/Image/figure4.png)
 - **Hyperparameter Tuning:** An exploration into hyperparameter tuning's impact on SNN's accuracy and efficiency, suggesting avenues for further optimization.
 
 ## Findings
