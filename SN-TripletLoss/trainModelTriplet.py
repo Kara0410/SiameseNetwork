@@ -1,3 +1,11 @@
+"""Training loop for the Triplet-Loss Siamese Network.
+
+Exposes :func:`train_Triplet`, which trains and validates a model for a
+given margin/activation configuration and returns its loss/accuracy
+history so callers (e.g. ``trainDiffHyper_Triplet.py``) can compare
+configurations.
+"""
+
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -6,8 +14,12 @@ import torch.nn.functional as F
 
 from torch import optim
 # custom created stuff
+from config import DEVICE
 from DatasetTriplet import train_dataloader, valid_dataloader
 from SiameseNNModelTriplet import SiameseNetworkTriplet
+
+LEARNING_RATE = 1e-4
+NUM_EPOCHS = 5
 
 # tqdm stuff
 # number of sample per batch
@@ -18,24 +30,32 @@ desc_1 = "Train-Iteration over the batches of Epoch "
 desc_2 = "Validation-Iteration over the batches of Epoch "
 
 
-def train_Triplet(margin=1, activation_func="selu"):
+def train_Triplet(margin: float = 1, activation_func: str = "selu") -> tuple[list, list, list, list, str]:
+    """Train and validate the Triplet-Loss model for one configuration.
+
+    Args:
+        margin: Margin used by ``torch.nn.TripletMarginLoss``.
+        activation_func: Activation function for the convolutional trunk
+            (``"relu"`` or ``"selu"``).
+
+    Returns:
+        A tuple of ``(train_loss_history, valid_loss_history,
+        train_acc_history, valid_acc_history, model_name)``.
+    """
     # setting up the network, loss, opt
-    model = SiameseNetworkTriplet(activation_func=activation_func).cuda()
+    model = SiameseNetworkTriplet(activation_func=activation_func).to(DEVICE)
     loss = torch.nn.TripletMarginLoss(margin=margin)
-    opt = optim.Adam(model.parameters(), lr=1e-4)
-    EPOCH = 5
+    opt = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     # Measuring the Model
-    counter = []
     train_loss_history = []
     valid_loss_history = []
 
     train_acc_history = []
     valid_acc_history = []
-    iteration_number = 0
 
     # Iterate through the epochs
-    for epoch in range(EPOCH):
+    for epoch in range(NUM_EPOCHS):
 
         # Training
         model.train()
@@ -44,8 +64,7 @@ def train_Triplet(margin=1, activation_func="selu"):
         train_total = 0
         for i, (anc_img, pos_img, neg_img) in tqdm(enumerate(train_dataloader, 0), total=num_samples_train,
                                                    desc=desc_1 + f"{epoch}"):
-            # Send the images and labels to CUDA
-            anc_img, pos_img, neg_img = anc_img.cuda(), pos_img.cuda(), neg_img.cuda()
+            anc_img, pos_img, neg_img = anc_img.to(DEVICE), pos_img.to(DEVICE), neg_img.to(DEVICE)
 
             # Zero the gradients
             opt.zero_grad()
@@ -80,8 +99,7 @@ def train_Triplet(margin=1, activation_func="selu"):
         with torch.no_grad():
             for i, (anc_img, pos_img, neg_img) in tqdm(enumerate(valid_dataloader, 0), total=num_samples_valid,
                                                        desc=desc_2 + f"{epoch}"):
-                # Send the images and labels to CUDA
-                anc_img, pos_img, neg_img = anc_img.cuda(), pos_img.cuda(), neg_img.cuda()
+                anc_img, pos_img, neg_img = anc_img.to(DEVICE), pos_img.to(DEVICE), neg_img.to(DEVICE)
 
                 output1, output2, output3 = model(anc_img, pos_img, neg_img)
 
@@ -99,7 +117,6 @@ def train_Triplet(margin=1, activation_func="selu"):
             valid_acc = valid_correct / valid_total
             valid_acc_history.append(valid_acc)
 
-
         # Print out the loss of each epoch for both training and validation
         print(f"\nEpoch number {epoch}\n"
               f"Training Loss: {np.mean(epoch_train_loss)}\n"
@@ -107,15 +124,10 @@ def train_Triplet(margin=1, activation_func="selu"):
               f"Validation Loss: {np.mean(epoch_val_loss)}\n"
               f"Validation Accuracy: {valid_acc}\n")
 
-        iteration_number += 1
-        counter.append(iteration_number)
         train_loss_history.append(np.mean(epoch_train_loss))
         valid_loss_history.append(np.mean(epoch_val_loss))
 
-    # Saving
+    # Save the trained model under a name that encodes its configuration.
     model_name = f"TL-{margin}-{activation_func}"
-
-    # Save the trained model
-    # torch.save(model.state_dict(), f"{model_name}.pth")
+    torch.save(model.state_dict(), f"{model_name}.pth")
     return train_loss_history, valid_loss_history, train_acc_history, valid_acc_history, model_name
-

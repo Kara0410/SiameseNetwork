@@ -1,7 +1,17 @@
-from trainModelTriplet import train_Triplet
+"""Hyperparameter sweep for the Triplet-Loss Siamese Network.
+
+Trains :func:`train_Triplet` for every combination of margin (0.1-1.0)
+and activation function (ReLU/SeLU), then plots the loss/accuracy curves
+of all configurations side by side for comparison.
+"""
+
 from itertools import product
+
 import numpy as np
+
+from trainModelTriplet import train_Triplet
 from Plotting import loss_acc_plt
+
 margin_values = np.round(np.arange(0.1, 1.1, 0.1), 1).tolist()
 possible_activation_func = ["relu", "selu"]
 
@@ -22,4 +32,4 @@ for margin, activation_func in possible_combos:
     all_model_names.append(model_name)
 
 loss_acc_plt(train_losses=all_train_losses, valid_losses=all_valid_losses,
-             train_accs=all_train_acc, valid_accs=all_valid_acc, model_names=all_model_names, plot_name="SNN-TL2")
+             train_accs=all_train_acc, valid_accs=all_valid_acc, model_names=all_model_names, plot_name="SNN-TL")

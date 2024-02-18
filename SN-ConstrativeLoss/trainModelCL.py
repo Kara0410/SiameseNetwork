@@ -1,15 +1,39 @@
+"""Training loop for the Contrastive-Loss Siamese Network.
+
+Exposes :func:`train_CL`, which trains and validates a model for a given
+margin/activation configuration and returns its loss/accuracy history so
+callers (e.g. ``trainDifferHyper_CL.py``) can compare configurations.
+"""
+
 import numpy as np
 import torch
 from tqdm import tqdm
 
 from torch import optim
 # custom created stuff
+from config import DEVICE
 from DatasetForCL import train_dataloader, valid_dataloader
 from SiameseNNModelCL import SiameseNetworkCL
 from ContrastiveLoss import ContrastiveLoss
 
+LEARNING_RATE = 1e-5
+NUM_EPOCHS = 5
+# Pairs with a euclidean distance above this are predicted as "dissimilar".
+DISTANCE_THRESHOLD = 0.5
 
-def train_CL(margin=1, activation="selu"):
+
+def train_CL(margin: float = 1, activation: str = "selu") -> tuple[list, list, list, list, str]:
+    """Train and validate the Contrastive-Loss model for one configuration.
+
+    Args:
+        margin: Margin used by :class:`ContrastiveLoss`.
+        activation: Activation function for the convolutional trunk
+            (``"relu"`` or ``"selu"``).
+
+    Returns:
+        A tuple of ``(train_loss_history, valid_loss_history,
+        train_acc_history, valid_acc_history, model_name)``.
+    """
     # tqdm stuff
     # number of sample per batch
     num_samples_train = len(train_dataloader)
@@ -19,22 +43,18 @@ def train_CL(margin=1, activation="selu"):
     desc_2 = "Validation-Iteration over the batches of Epoch "
 
     # setting up the network, loss, opt
-    device = torch.device("cuda")
-    model = SiameseNetworkCL(activation=activation).to(device=device)
+    model = SiameseNetworkCL(activation=activation).to(DEVICE)
     loss = ContrastiveLoss(margin=margin)
-    opt = optim.Adam(model.parameters(), lr=1e-5)
-    Epochs = 5
+    opt = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     # Measuring the Model
-    counter = []
     train_loss_history = []
     valid_loss_history = []
     train_acc_history = []
     valid_acc_history = []
-    iteration_number = 0
 
     # Iterate through the epochs
-    for epoch in range(1, Epochs + 1):
+    for epoch in range(1, NUM_EPOCHS + 1):
 
         # Training
         model.train()
@@ -43,8 +63,7 @@ def train_CL(margin=1, activation="selu"):
         total_train = 0
         for img0, img1, label in tqdm(train_dataloader, total=num_samples_train,
                                       desc=desc_1 + f"{epoch}"):
-            # Send the images and labels to CUDA
-            img0, img1, label = img0.cuda(), img1.cuda(), label.cuda()
+            img0, img1, label = img0.to(DEVICE), img1.to(DEVICE), label.to(DEVICE)
 
             # Zero the gradients
             opt.zero_grad()
@@ -57,7 +76,7 @@ def train_CL(margin=1, activation="selu"):
 
             # Calculate accuracy
             euclidean_distance = torch.nn.functional.pairwise_distance(output1, output2, keepdim=True)
-            predictions = (euclidean_distance > 0.5).float()  # Adjust the threshold as needed
+            predictions = (euclidean_distance > DISTANCE_THRESHOLD).float()
             correct_train += torch.sum(predictions == label).item()
             total_train += label.size(0)
 
@@ -74,8 +93,7 @@ def train_CL(margin=1, activation="selu"):
         with torch.no_grad():
             for img0, img1, label in tqdm(valid_dataloader, total=num_samples_valid,
                                           desc=desc_2 + f"{epoch}"):
-                # Send the images and labels to CUDA
-                img0, img1, label = img0.cuda(), img1.cuda(), label.cuda()
+                img0, img1, label = img0.to(DEVICE), img1.to(DEVICE), label.to(DEVICE)
 
                 output1, output2 = model(img0, img1)
 
@@ -84,12 +102,9 @@ def train_CL(margin=1, activation="selu"):
 
                 # Calculate accuracy
                 euclidean_distance = torch.nn.functional.pairwise_distance(output1, output2, keepdim=True)
-                predictions = (euclidean_distance > 0.5).float()  # Adjust the threshold as needed
+                predictions = (euclidean_distance > DISTANCE_THRESHOLD).float()
                 correct_valid += torch.sum(predictions == label).item()
                 total_valid += label.size(0)
-
-        iteration_number += 1
-        counter.append(iteration_number)
 
         # calculating acc
         train_accuracy = correct_train / total_train
@@ -108,8 +123,7 @@ def train_CL(margin=1, activation="selu"):
               f"Validation Loss: {np.mean(epoch_val_loss)}\n"
               f"Validation Accuracy: {valid_accuracy}\n")
 
-    # Saving
+    # Save the trained model under a name that encodes its configuration.
     model_name = f"CL-{margin}-{(activation).upper()}"
-    # Save the trained model
-    #torch.save(model.state_dict(), f"{model_name}.pth")
+    torch.save(model.state_dict(), f"{model_name}.pth")
     return train_loss_history, valid_loss_history, train_acc_history, valid_acc_history, model_name

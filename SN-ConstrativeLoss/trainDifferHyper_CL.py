@@ -1,6 +1,15 @@
-from trainModelCL import train_CL
+"""Hyperparameter sweep for the Contrastive-Loss Siamese Network.
+
+Trains :func:`train_CL` for every combination of margin (0.1-1.0) and
+activation function (ReLU/SeLU), then plots the loss/accuracy curves of
+all configurations side by side for comparison.
+"""
+
 from itertools import product
+
 import numpy as np
+
+from trainModelCL import train_CL
 from Plotting import loss_acc_plt
 
 possible_activation_func = ["relu", "selu"]

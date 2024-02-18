@@ -1,9 +1,22 @@
+"""CNN-based Siamese Network used by the Contrastive-Loss variant.
+
+Supports swapping the convolutional trunk's activation function between
+ReLU and SeLU so the two configurations can be compared under an
+otherwise identical architecture.
+"""
+
+import torch
 import torch.nn as nn
 
 
 class SiameseNetworkCL(nn.Module):
-    def __init__(self, activation="relu"):
+    """Siamese network whose embeddings are compared via Contrastive Loss."""
+
+    def __init__(self, activation: str = "relu") -> None:
         super(SiameseNetworkCL, self).__init__()
+
+        if activation not in ("relu", "selu"):
+            raise ValueError(f"Unsupported activation '{activation}', expected 'relu' or 'selu'")
 
         self.activation = activation
 
@@ -48,15 +61,17 @@ class SiameseNetworkCL(nn.Module):
             nn.Sigmoid()
         )
 
-    def forward_once(self, x):
+    def forward_once(self, x: torch.Tensor) -> torch.Tensor:
+        """Embed a single image batch using the configured activation trunk."""
         if self.activation == "relu":
             x = self.convolutionalLayerRelu(x)
-        elif self.activation == "selu":
+        else:
             x = self.convolutionalLayerSelu(x)
         x = self.connectedLayer(x)
         return x
 
-    def forward(self, input_1, input_2):
+    def forward(self, input_1: torch.Tensor, input_2: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Embed both inputs; the embeddings are compared by ContrastiveLoss."""
         output_1 = self.forward_once(input_1)
         output_2 = self.forward_once(input_2)
         return output_1, output_2

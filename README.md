@@ -28,6 +28,16 @@ Included in our analysis is an insightful plot (Figure 6) illustrating the perfo
 
 The findings from this study open several avenues for future research, including further optimization of hyperparameters and exploration of additional neural network architectures to enhance face recognition capabilities.
 
+## Setup
+
+Install the dependencies with:
+
+```
+pip install -r requirements.txt
+```
+
+The training scripts expect an `anchor`/`positive`/`negative` image dataset under a `data/` directory at the project root. Point at a different location by setting the `VISIONAUTHAI_DATA_DIR` environment variable (see `config.py`). Use `CreateImgDirectories.py` to create the folder structure and seed the `negative` folder from the [Labelled Faces in the Wild](http://vis-www.cs.umass.edu/lfw/) dataset.
+
 ## Acknowledgments
 
-This work is based on the study "Practical Work in AI" by Boran Cihan Polat. For a deeper dive into the methodology, results, and theoretical underpinnings, please read teh provided pdf-file.
+This work is based on the study "Practical Work in AI" by Boran Cihan Polat.

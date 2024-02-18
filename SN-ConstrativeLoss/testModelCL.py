@@ -1,15 +1,32 @@
-import torch.nn.functional as F
-from DatasetForCL import test_dataloader
-from SiameseNNModelCL import SiameseNetworkCL
-import torchvision
-import torch
+"""Visualizes Contrastive-Loss model predictions on pairs from the test set.
 
+Loads a trained checkpoint (named after its margin/activation
+configuration, see ``trainModelCL.train_CL``), then for ten pairs from
+the test dataloader shows the two images together with their embedding
+distance ("dissimilarity").
+"""
+
+import torch
+import torch.nn.functional as F
+import torchvision
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Creating some helper functions
+from config import DEVICE
+from DatasetForCL import test_dataloader
+from SiameseNNModelCL import SiameseNetworkCL
 
-def imshow(img, text=None):
+# Must match the margin/activation of the checkpoint produced by train_CL,
+# e.g. "CL-1-SELU" for margin=1, activation="selu".
+MODEL_NAME = "CL-1-SELU"
+ACTIVATION = "selu"
+
+# Index of the first image (x0) to compare the other test pairs against.
+SPECIFIC_INDEX = 5
+
+
+def imshow(img: torch.Tensor, text: str = None) -> None:
+    """Display an image grid with an optional caption."""
     npimg = img.numpy()
     plt.axis("off")
     if text:
@@ -19,16 +36,14 @@ def imshow(img, text=None):
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
 
-# Specify the index of the image you want to visualize
-specific_index = 5  # Change this to the index you want to visualize
 
 # Get the specific image from the dataloader
 dataiter = iter(test_dataloader)
-for idx in range(specific_index + 1):
+for idx in range(SPECIFIC_INDEX + 1):
     x0, _, _ = next(dataiter)
 
-model = SiameseNetworkCL().cuda()
-model.load_state_dict(torch.load("./ContrastiveLossModel.pth"))
+model = SiameseNetworkCL(activation=ACTIVATION).to(DEVICE)
+model.load_state_dict(torch.load(f"./{MODEL_NAME}.pth", map_location=DEVICE))
 model.eval()
 
 for i in range(10):
@@ -36,6 +51,6 @@ for i in range(10):
 
     concatenated = torch.cat((x0, x1), 0)
 
-    output1, output2 = model(x0.cuda(), x1.cuda())
+    output1, output2 = model(x0.to(DEVICE), x1.to(DEVICE))
     euclidean_distance = F.pairwise_distance(output1, output2)
     imshow(torchvision.utils.make_grid(concatenated), f'Dissimilarity: {euclidean_distance.item():.2f}')

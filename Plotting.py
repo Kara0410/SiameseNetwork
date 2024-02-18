@@ -1,16 +1,46 @@
+"""Shared plotting helper for visualizing training/validation curves.
+
+Used by the training scripts of all three Siamese Network variants to
+compare loss and accuracy across one or more model configurations.
+"""
+
 import matplotlib.pyplot as plt
 
-def loss_acc_plt(train_losses: list, valid_losses: list,
-                 train_accs: list, valid_accs: list,
-                 model_names, epochs=5,):
-    # Calculate the number of rows needed for subplots
+
+def loss_acc_plt(
+    train_losses: list,
+    valid_losses: list,
+    train_accs: list,
+    valid_accs: list,
+    model_names: list,
+    plot_name: str = "model",
+    epochs: int = 5,
+) -> None:
+    """Plot per-epoch loss and accuracy curves for one or more models.
+
+    Each of ``train_losses``, ``valid_losses``, ``train_accs`` and
+    ``valid_accs`` is a list with one entry per model, where each entry
+    is itself a list of per-epoch values. A grid of subplots (one per
+    model) is created for the loss curves and another for the accuracy
+    curves, then both figures are saved to disk.
+
+    Args:
+        train_losses: Per-model lists of training loss per epoch.
+        valid_losses: Per-model lists of validation loss per epoch.
+        train_accs: Per-model lists of training accuracy per epoch.
+        valid_accs: Per-model lists of validation accuracy per epoch.
+        model_names: Display name for each model, used as subplot titles.
+        plot_name: Base filename used for the saved figures
+            (``f"{plot_name}_loss.png"`` and ``f"{plot_name}_acc.png"``).
+        epochs: Number of epochs each model was trained for.
+    """
+    # Lay out the per-model subplots in a grid with up to 4 columns.
     num_plots = len(train_losses)
-    num_cols = 4  # Change the number of columns to 4
+    num_cols = 4
     num_rows = num_plots // num_cols
     if num_plots % num_cols != 0:
         num_rows += 1
 
-    # Define the range for epochs
     epochs_range = list(range(1, epochs + 1))
 
     # Create two figures, one for loss and one for accuracy
@@ -48,17 +78,5 @@ def loss_acc_plt(train_losses: list, valid_losses: list,
     fig_acc.tight_layout()
 
     # Save the plots as separate images
-    fig_loss.savefig(f"{model_names}_loss.png")
-    fig_acc.savefig(f"{model_names}_acc.png")
-
-"""
-# Example usage with dummy data
-# You should replace the following lists with your actual data.
-train_losses = [[0.4, 0.35, 0.3, 0.25, 0.2]] * 20
-valid_losses = [[0.45, 0.4, 0.35, 0.3, 0.25]] * 20
-train_accs = [[0.6, 0.65, 0.7, 0.75, 0.8]] * 20
-valid_accs = [[0.55, 0.6, 0.65, 0.7, 0.75]] * 20
-model_names = [f"Model_{i+1}" for i in range(20)]
-
-loss_acc_plt(train_losses, valid_losses, train_accs, valid_accs, model_names, epochs=5, plot_name="model_performance")
-"""
+    fig_loss.savefig(f"{plot_name}_loss.png")
+    fig_acc.savefig(f"{plot_name}_acc.png")

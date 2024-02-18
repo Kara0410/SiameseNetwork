@@ -1,22 +1,32 @@
+"""Trains the vanilla Siamese Network (BCE loss, ReLU activations).
+
+Runs a fixed number of training/validation epochs, prints per-epoch
+metrics, saves the trained weights, and plots the loss/accuracy curves.
+"""
+
 import numpy as np
 import torch
 from tqdm import tqdm
 from torch import optim
 
 # custom created stuff
+from config import DEVICE
 from DatasetVanilla import train_dataloader, valid_dataloader
 from SiameseNetworkVanilla import SiameseNetworkVanilla
 from Plotting import loss_acc_plt
 
+LEARNING_RATE = 1e-6
+NUM_EPOCHS = 5
+# Predictions above this probability are treated as "same person".
+MATCH_THRESHOLD = 0.6
+MODEL_NAME = "SiameseVanillaModelReLU"
+
 # Measuring the Model
-counter = []
 train_loss_history = []
 train_acc_history = []
 
 valid_loss_history = []
 valid_acc_history = []
-
-iteration_number = 0
 
 # tqdm stuff
 # number of sample per batch
@@ -27,13 +37,12 @@ desc_1 = "Train-Iteration over the batches of Epoch "
 desc_2 = "Validation-Iteration over the batches of Epoch "
 
 # setting up the network, loss, opt
-model = SiameseNetworkVanilla().cuda()
+model = SiameseNetworkVanilla().to(DEVICE)
 loss = torch.nn.BCELoss()
-opt = optim.Adam(model.parameters(), lr=1e-6)
-EPOCH = 5
+opt = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 # Iterate through the epochs
-for epoch in range(EPOCH):
+for epoch in range(NUM_EPOCHS):
 
     # Training
     model.train()
@@ -41,8 +50,7 @@ for epoch in range(EPOCH):
     correct_train = 0
     total_train = 0
     for anchor_img, other_img, label in tqdm(train_dataloader, total=num_samples_train, desc=desc_1 + f"{epoch}"):
-        # Send the images and labels to CUDA
-        anchor_img, other_img, label = anchor_img.cuda(), other_img.cuda(), label.cuda()
+        anchor_img, other_img, label = anchor_img.to(DEVICE), other_img.to(DEVICE), label.to(DEVICE)
 
         # Zero the gradients
         opt.zero_grad()
@@ -54,7 +62,7 @@ for epoch in range(EPOCH):
         epoch_train_loss.append(loss_bce.item())
 
         # Accuracy calculation
-        predicted_labels = (prediction > 0.6).float()
+        predicted_labels = (prediction > MATCH_THRESHOLD).float()
         correct_train += (predicted_labels == label).sum().item()
         total_train += label.size(0)
 
@@ -75,8 +83,7 @@ for epoch in range(EPOCH):
     with torch.no_grad():
         for i, (anchor_img, other_img, label) in tqdm(enumerate(valid_dataloader, 0), total=num_samples_valid,
                                                       desc=desc_2 + f"{epoch}"):
-            # Send the images and labels to CUDA
-            anchor_img, other_img, label = anchor_img.cuda(), other_img.cuda(), label.cuda()
+            anchor_img, other_img, label = anchor_img.to(DEVICE), other_img.to(DEVICE), label.to(DEVICE)
 
             prediction = model(anchor_img, other_img)
 
@@ -84,7 +91,7 @@ for epoch in range(EPOCH):
             epoch_val_loss.append(loss_bce.item())
 
             # Accuracy calculation
-            predicted_labels = (prediction > 0.6).float()
+            predicted_labels = (prediction > MATCH_THRESHOLD).float()
             correct_val += (predicted_labels == label).sum().item()
             total_val += label.size(0)
 
@@ -99,15 +106,13 @@ for epoch in range(EPOCH):
           f"Validation Loss: {np.mean(epoch_val_loss)}\n"
           f"Validation Accuracy: {validation_accuracy}\n")
 
-    iteration_number += 1
-    counter.append(iteration_number)
     train_loss_history.append(np.mean(epoch_train_loss))
     valid_loss_history.append(np.mean(epoch_val_loss))
 
 # Save the trained model
-torch.save(model.state_dict(), "SiameseVanillaModelReLU.pth")
+torch.save(model.state_dict(), f"{MODEL_NAME}.pth")
 
-
-# Plot the training and validation loss
-loss_acc_plt(train_losses=train_loss_history, valid_losses=valid_loss_history,
-             train_accs=train_acc_history, valid_accs=valid_acc_history, model_names="SV-ReLU")
+# Plot the training and validation loss/accuracy
+loss_acc_plt(train_losses=[train_loss_history], valid_losses=[valid_loss_history],
+             train_accs=[train_acc_history], valid_accs=[valid_acc_history],
+             model_names=[MODEL_NAME], plot_name=MODEL_NAME, epochs=NUM_EPOCHS)

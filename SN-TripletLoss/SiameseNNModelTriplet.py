@@ -1,9 +1,22 @@
+"""CNN-based Siamese Network used by the Triplet-Loss variant.
+
+Supports swapping the convolutional trunk's activation function between
+ReLU and SeLU. ``forward`` embeds an (anchor, positive, negative) triplet
+for use with ``torch.nn.TripletMarginLoss``.
+"""
+
+import torch
 import torch.nn as nn
 
 
 class SiameseNetworkTriplet(nn.Module):
-    def __init__(self, activation_func="relu"):
+    """Siamese network trained with triplet margin loss."""
+
+    def __init__(self, activation_func: str = "relu") -> None:
         super(SiameseNetworkTriplet, self).__init__()
+
+        if activation_func not in ("relu", "selu"):
+            raise ValueError(f"Unsupported activation '{activation_func}', expected 'relu' or 'selu'")
 
         self.activation = activation_func
 
@@ -47,7 +60,8 @@ class SiameseNetworkTriplet(nn.Module):
             nn.Sigmoid()
         )
 
-    def forward_once(self, x):
+    def forward_once(self, x: torch.Tensor) -> torch.Tensor:
+        """Embed a single image batch using the configured activation trunk."""
         if self.activation == "relu":
             x = self.convolutionalLayerRelu(x)
         else:
@@ -56,7 +70,10 @@ class SiameseNetworkTriplet(nn.Module):
         x = self.connectedLayer(x)
         return x
 
-    def forward(self, input_1, input_2, input_3):
+    def forward(
+        self, input_1: torch.Tensor, input_2: torch.Tensor, input_3: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Embed an (anchor, positive, negative) triplet."""
         output_1 = self.forward_once(input_1)
         output_2 = self.forward_once(input_2)
         output_3 = self.forward_once(input_3)

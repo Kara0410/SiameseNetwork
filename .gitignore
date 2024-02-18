@@ -1,0 +1,17 @@
+# IDE
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+
+# Trained models
+*.pth
+
+# Generated plots
+*_loss.png
+*_acc.png
+
+# Datasets
+data/
+lfw/

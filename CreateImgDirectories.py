@@ -1,23 +1,28 @@
+"""Creates the anchor/positive/negative data folders.
+
+Seeds the negative folder from a local ``lfw`` (Labelled Faces in the
+Wild) directory if it's empty. Run this once before collecting images
+with ``CreateAncPostPictures.py``.
+"""
+
 import os
 
-# setup path of the directories
-pos_path = os.path.join("C:/Users/Boran/Desktop/Semester 5/Practical Work in AI/data/", "positive")
-neg_path = os.path.join("C:/Users/Boran/Desktop/Semester 5/Practical Work in AI/data/", "negative")
-anc_path = os.path.join("C:/Users/Boran/Desktop/Semester 5/Practical Work in AI/data/", "anchor")
+from config import ANCHOR_DIR, NEGATIVE_DIR, POSITIVE_DIR
 
-# create directories
-if os.path.exists(pos_path) is False:
-    os.makedirs(pos_path)
-if os.path.exists(neg_path) is False:
-    os.makedirs(neg_path)
-if os.path.exists(anc_path) is False:
-    os.makedirs(anc_path)
 
-test = os.listdir(neg_path)
-# copying Labelled Faces in the Wild Dataset to negative example folder
-if len(os.listdir(neg_path)) == 0:
-    for all_dirs in os.listdir("lfw"):
-        for file in os.listdir(f"lfw/{all_dirs}"):
-            existing_path = os.path.join("lfw", all_dirs, file)
-            new_path = os.path.join(neg_path, file)
-            os.replace(existing_path, new_path)
+def create_directories() -> None:
+    """Create the data folders and populate `negative` from ./lfw if empty."""
+    for path in (POSITIVE_DIR, NEGATIVE_DIR, ANCHOR_DIR):
+        os.makedirs(path, exist_ok=True)
+
+    # Seed the negative folder with Labelled Faces in the Wild images, if empty.
+    if not os.listdir(NEGATIVE_DIR):
+        for person_dir in os.listdir("lfw"):
+            for file_name in os.listdir(f"lfw/{person_dir}"):
+                existing_path = os.path.join("lfw", person_dir, file_name)
+                new_path = os.path.join(NEGATIVE_DIR, file_name)
+                os.replace(existing_path, new_path)
+
+
+if __name__ == "__main__":
+    create_directories()
