@@ -30,4 +30,4 @@ The findings from this study open several avenues for future research, including
 
 ## Acknowledgments
 
-This work is based on the study "Practical Work in AI" by Boran Cihan Polat. For a deeper dive into the methodology, results, and theoretical underpinnings, please read teh provided pdf-file.
+This work is based on the study "Practical Work in AI" by Boran Cihan Polat. For a deeper dive into the methodology, results, and theoretical underpinnings, please read the provided pdf-file.
