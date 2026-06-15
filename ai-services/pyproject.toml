@@ -1,0 +1,33 @@
+[project]
+name = "ai-services"
+version = "0.1.0"
+description = "Pluggable embedding, explainability, vector search, and reasoning services for the VisionIQ identity intelligence platform."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pillow",
+    "opencv-python-headless",
+    "torch",
+    "torchvision",
+    "transformers",
+    "faiss-cpu",
+    "httpx",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["ai_services*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

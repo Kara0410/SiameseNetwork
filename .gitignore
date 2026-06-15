@@ -1,17 +1,45 @@
 # IDE
 .idea/
+.vscode/
+.claude/
+.cursor/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Python
 __pycache__/
 *.pyc
+*.egg-info/
+.venv/
+.pytest_cache/
 
-# Trained models
+# Logs
+*.log
+
+# Trained models / weights
 *.pth
+*.onnx
+models/weights/
 
 # Generated plots
 *_loss.png
 *_acc.png
 
-# Datasets
+# Datasets and runtime data
 data/
 lfw/
+backend/data/
+ai-services/data/
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Env files
+.env
+.env.local
+*/.env

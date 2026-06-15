@@ -1,0 +1,12 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pydantic-settings>=2.2
+sqlmodel>=0.0.16
+python-multipart>=0.0.9
+websockets>=12.0
+httpx>=0.27
+
+# Installable AI/ML services package (embeddings, explainability, vector store,
+# reasoning, liveness). Editable install so local changes are picked up immediately.
+-e ../ai-services

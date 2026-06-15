@@ -1,0 +1,51 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      VISIONIQ_EMBEDDING_DEFAULT: ${VISIONIQ_EMBEDDING_DEFAULT:-dummy}
+      VISIONIQ_REASONING_PROVIDER: ${VISIONIQ_REASONING_PROVIDER:-template}
+      VISIONIQ_VECTOR_STORE_DIR: /data/vector_store
+      VISIONIQ_DATABASE_URL: sqlite:////data/visioniq.db
+      VISIONIQ_MODEL_CACHE: /data/model_cache
+      VISIONIQ_CORS_ORIGINS: '["http://localhost:3000"]'
+      VISIONIQ_OLLAMA_HOST: http://ollama:11434
+      VISIONIQ_OLLAMA_MODEL: ${VISIONIQ_OLLAMA_MODEL:-llama3.2}
+      VISIONIQ_OPENAI_API_KEY: ${VISIONIQ_OPENAI_API_KEY:-}
+      VISIONIQ_OPENAI_BASE_URL: ${VISIONIQ_OPENAI_BASE_URL:-https://api.openai.com/v1}
+      VISIONIQ_OPENAI_MODEL: ${VISIONIQ_OPENAI_MODEL:-gpt-4o-mini}
+    volumes:
+      - visioniq-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  # Optional local LLM for the `ollama` reasoning provider. Enable with:
+  #   docker compose --profile ollama up
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+volumes:
+  visioniq-data:
+  ollama-data:
